@@ -2,33 +2,54 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
+from pathlib import Path
+
+# -----------------------------
+# Load Data
+# -----------------------------
+@st.cache_data
+from pathlib import Path
 
 # -----------------------------
 # Load Data
 # -----------------------------
 @st.cache_data
 def load_data():
-    orders = pd.read_csv("/Users/manthankhandelwal/Desktop/ecommerce_data_analysis/olist_orders_dataset.csv")
-    order_items = pd.read_csv("/Users/manthankhandelwal/Desktop/ecommerce_data_analysis/olist_order_items_dataset.csv")
-    order_payments = pd.read_csv("/Users/manthankhandelwal/Desktop/ecommerce_data_analysis/olist_order_payments_dataset.csv")
-    order_reviews = pd.read_csv("/Users/manthankhandelwal/Desktop/ecommerce_data_analysis/olist_order_reviews_dataset.csv")
-    customers = pd.read_csv("/Users/manthankhandelwal/Desktop/ecommerce_data_analysis/olist_customers_dataset.csv")
-    product = pd.read_csv("/Users/manthankhandelwal/Desktop/ecommerce_data_analysis/olist_products_dataset.csv")
-    seller = pd.read_csv("/Users/manthankhandelwal/Desktop/ecommerce_data_analysis/olist_sellers_dataset.csv")
-    translation = pd.read_csv("/Users/manthankhandelwal/Desktop/ecommerce_data_analysis/product_category_name_translation.csv")
+    BASE_DIR = Path(__file__).parent
 
-    df = orders.merge(customers, on="customer_id", how="left")\
-               .merge(order_items, on="order_id", how="left")\
-               .merge(order_payments, on="order_id", how="left")\
-               .merge(order_reviews, on="order_id", how="left")\
-               .merge(product, on="product_id", how="left")\
-               .merge(seller, on="seller_id", how="left")
+    orders = pd.read_csv(BASE_DIR / "olist_orders_dataset.csv")
+    order_items = pd.read_csv(BASE_DIR / "olist_order_items_dataset.csv")
+    order_payments = pd.read_csv(BASE_DIR / "olist_order_payments_dataset.csv")
+    order_reviews = pd.read_csv(BASE_DIR / "olist_order_reviews_dataset.csv")
+    customers = pd.read_csv(BASE_DIR / "olist_customers_dataset.csv")
+    product = pd.read_csv(BASE_DIR / "olist_products_dataset.csv")
+    seller = pd.read_csv(BASE_DIR / "olist_sellers_dataset.csv")
+    translation = pd.read_csv(BASE_DIR / "product_category_name_translation.csv")
+
+    df = (
+        orders.merge(customers, on="customer_id", how="left")
+        .merge(order_items, on="order_id", how="left")
+        .merge(order_payments, on="order_id", how="left")
+        .merge(order_reviews, on="order_id", how="left")
+        .merge(product, on="product_id", how="left")
+        .merge(seller, on="seller_id", how="left")
+    )
 
     df = df.drop_duplicates()
-    df["order_approved_at"] = pd.to_datetime(df["order_approved_at"], errors="coerce")
-    df["order_date"] = pd.to_datetime(df["order_approved_at"]).dt.date
-    df["order_month"] = pd.to_datetime(df["order_date"]).dt.to_period('M').astype(str)
-    df = df.merge(translation, on="product_category_name", how="left")
+
+    df["order_approved_at"] = pd.to_datetime(
+        df["order_approved_at"], errors="coerce"
+    )
+
+    df["order_date"] = df["order_approved_at"].dt.date
+    df["order_month"] = df["order_approved_at"].dt.to_period("M").astype(str)
+
+    df = df.merge(
+        translation,
+        on="product_category_name",
+        how="left"
+    )
+
     return df
 
 full_df = load_data()
